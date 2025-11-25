@@ -159,6 +159,10 @@
         <label for="wartungArtInput">Reparatur / Wartung</label>
         <input type="text" id="wartungArtInput" placeholder="z. B. Ölwechsel, TÜV, Zahnriemenwechsel">
       </div>
+      <div class="flex-col">
+        <label for="wartungPreisInput">Kosten (€)</label>
+        <input type="number" id="wartungPreisInput" min="0" step="0.01" placeholder="z. B. 89.9">
+      </div>
     </div>
 
     <div class="flex-row">
@@ -181,12 +185,15 @@
           <th>Datum</th>
           <th>Kilometerstand</th>
           <th>Reparatur / Wartung</th>
+          <th>Kosten (€)</th>
         </tr>
       </thead>
       <tbody id="wartungTableBody">
         <!-- gefüllt aus localStorage -->
       </tbody>
     </table>
+
+    <div id="wartungSummaryMonths" class="summary"></div>
   </div>
 
   <!-- Tanken / Verbrauch -->
@@ -194,7 +201,8 @@
     <h2>Tanken &amp; Verbrauch</h2>
     <p class="small-text">
       Trage Tankvorgänge ein. Verbrauch und Kosten werden automatisch berechnet.<br>
-      Verbrauch: Liter / gefahrene Kilometer × 100.
+      Verbrauch: Liter / gefahrene Kilometer × 100.<br>
+      Kosten = Liter × Preis/Liter.
     </p>
 
     <div class="flex-row">
@@ -250,6 +258,7 @@
     </table>
 
     <div id="tankenSummary" class="summary"></div>
+    <div id="tankenSummaryMonths" class="summary"></div>
   </div>
 
   <!-- Inspektions-Notizen -->
@@ -437,6 +446,32 @@
     }
 
     // ==========================
+    // Datum -> Monat/Jahr-Helfer
+    // ==========================
+    function getYearMonthFromEntry(entry) {
+      let d = null;
+      if (entry.dateMs) {
+        d = new Date(entry.dateMs);
+      } else if (entry.datum) {
+        // Versuch, deutsches Datum zu parsen (TT.MM.JJJJ)
+        const parts = entry.datum.split(".");
+        if (parts.length === 3) {
+          const day = Number(parts[0]);
+          const month = Number(parts[1]) - 1;
+          const year = Number(parts[2]);
+          d = new Date(year, month, day);
+        }
+      }
+      if (!d || isNaN(d.getTime())) return null;
+      return { year: d.getFullYear(), month: d.getMonth() };
+    }
+
+    function formatMonthYear(year, monthIndex) {
+      const d = new Date(year, monthIndex, 1);
+      return d.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
+    }
+
+    // ==========================
     // Wartung / Reparaturen
     // ==========================
     function getWartungList() {
@@ -466,16 +501,25 @@
           const tdDatum = document.createElement("td");
           const tdKm = document.createElement("td");
           const tdArt = document.createElement("td");
+          const tdPreis = document.createElement("td");
 
           tdDatum.textContent = entry.datum || "";
           tdKm.textContent = entry.km != null ? entry.km : "";
           tdArt.textContent = entry.art || "";
+          if (entry.preis != null && !isNaN(entry.preis)) {
+            tdPreis.textContent = entry.preis.toFixed(2);
+          } else {
+            tdPreis.textContent = "";
+          }
 
           tr.appendChild(tdDatum);
           tr.appendChild(tdKm);
           tr.appendChild(tdArt);
+          tr.appendChild(tdPreis);
           tbody.appendChild(tr);
         });
+
+      renderWartungMonthlySummary();
     }
 
     function maybeAskUpdateTuevFromWartung(artText) {
@@ -509,6 +553,7 @@
     function addWartungEntry() {
       const kmValue = document.getElementById("wartungKmInput").value;
       const artValue = document.getElementById("wartungArtInput").value.trim();
+      const preisValue = document.getElementById("wartungPreisInput").value;
 
       const km = kmValue === "" ? null : Number(kmValue);
       if (km == null || isNaN(km)) {
@@ -520,6 +565,15 @@
         return;
       }
 
+      let preis = null;
+      if (preisValue !== "") {
+        preis = Number(preisValue);
+        if (isNaN(preis) || preis < 0) {
+          alert("Bitte einen gültigen Preis eingeben (>= 0) oder Feld leer lassen.");
+          return;
+        }
+      }
+
       const now = new Date();
       const datumText = now.toLocaleDateString("de-DE");
       const dateMs = now.getTime();
@@ -529,11 +583,13 @@
         datum: datumText,
         dateMs: dateMs,
         km: km,
-        art: artValue
+        art: artValue,
+        preis: preis
       });
       saveWartungList(list);
       document.getElementById("wartungKmInput").value = "";
       document.getElementById("wartungArtInput").value = "";
+      document.getElementById("wartungPreisInput").value = "";
       renderWartungTable();
       renderDashboard();
 
@@ -561,6 +617,51 @@
         renderWartungTable();
         renderDashboard();
       });
+    }
+
+    function renderWartungMonthlySummary() {
+      const container = document.getElementById("wartungSummaryMonths");
+      const list = getWartungList();
+      if (!container) return;
+
+      if (list.length === 0) {
+        container.textContent = "Noch keine Wartungskosten erfasst.";
+        return;
+      }
+
+      const map = {}; // key: "year-month" -> sum
+      list.forEach(e => {
+        if (e.preis == null || isNaN(e.preis) || e.preis <= 0) return;
+        const ym = getYearMonthFromEntry(e);
+        if (!ym) return;
+        const key = ym.year + "-" + ym.month;
+        if (!map[key]) {
+          map[key] = { year: ym.year, month: ym.month, sum: 0 };
+        }
+        map[key].sum += e.preis;
+      });
+
+      const keys = Object.keys(map);
+      if (keys.length === 0) {
+        container.textContent = "Keine Wartungskosten mit Betrag erfasst.";
+        return;
+      }
+
+      // sortiert nach Jahr/Monat
+      keys.sort((a, b) => {
+        const aa = map[a], bb = map[b];
+        if (aa.year !== bb.year) return aa.year - bb.year;
+        return aa.month - bb.month;
+      });
+
+      let html = "<strong>Wartungskosten pro Monat:</strong><br>";
+      keys.forEach(k => {
+        const item = map[k];
+        const label = formatMonthYear(item.year, item.month);
+        html += `${label}: ${item.sum.toFixed(2)} €<br>`;
+      });
+
+      container.innerHTML = html;
     }
 
     // ==========================
@@ -617,6 +718,7 @@
         });
 
       renderTankenSummary();
+      renderTankenMonthlySummary();
     }
 
     function renderTankenSummary() {
@@ -656,6 +758,50 @@
 
       summary.textContent = text;
       renderDashboard();
+    }
+
+    function renderTankenMonthlySummary() {
+      const container = document.getElementById("tankenSummaryMonths");
+      const list = getTankenList();
+      if (!container) return;
+
+      if (list.length === 0) {
+        container.textContent = "";
+        return;
+      }
+
+      const map = {};
+      list.forEach(e => {
+        if (e.kosten == null || isNaN(e.kosten) || e.kosten <= 0) return;
+        const ym = getYearMonthFromEntry(e);
+        if (!ym) return;
+        const key = ym.year + "-" + ym.month;
+        if (!map[key]) {
+          map[key] = { year: ym.year, month: ym.month, sum: 0 };
+        }
+        map[key].sum += e.kosten;
+      });
+
+      const keys = Object.keys(map);
+      if (keys.length === 0) {
+        container.textContent = "Keine Tankkosten erfasst.";
+        return;
+      }
+
+      keys.sort((a, b) => {
+        const aa = map[a], bb = map[b];
+        if (aa.year !== bb.year) return aa.year - bb.year;
+        return aa.month - bb.month;
+      });
+
+      let html = "<strong>Tankkosten pro Monat:</strong><br>";
+      keys.forEach(k => {
+        const item = map[k];
+        const label = formatMonthYear(item.year, item.month);
+        html += `${label}: ${item.sum.toFixed(2)} €<br>`;
+      });
+
+      container.innerHTML = html;
     }
 
     function addTankenEntry() {
@@ -830,7 +976,7 @@
       }
 
       let lines = [];
-      lines.push("Datum;Kilometer;Text");
+      lines.push("Datum;Kilometer;Text;Kosten (€)");
 
       list
         .slice()
@@ -839,7 +985,8 @@
           const line = [
             e.datum || "",
             e.km != null ? e.km : "",
-            e.art || ""
+            e.art || "",
+            e.preis != null && !isNaN(e.preis) ? e.preis.toFixed(2) : ""
           ].join(";");
           lines.push(line);
         });
