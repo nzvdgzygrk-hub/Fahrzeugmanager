@@ -192,9 +192,7 @@
           <th>Kosten (€)</th>
         </tr>
       </thead>
-      <tbody id="wartungTableBody">
-        <!-- gefüllt aus localStorage -->
-      </tbody>
+      <tbody id="wartungTableBody"></tbody>
     </table>
     <div id="wartungSummary" class="summary"></div>
   </div>
@@ -205,7 +203,7 @@
     <p class="small-text">
       Trage Tankvorgänge ein. Verbrauch und Kosten werden automatisch berechnet.<br>
       Verbrauch: Liter / gefahrene Kilometer × 100.<br>
-      Standard: Benzin. Letzter Kraftstoff & Preis bleiben gespeichert. Datum wird automatisch auf heute gesetzt.
+      Standard: Benzin. Letzter Kraftstoff &amp; Preis bleiben gespeichert. Datum wird automatisch auf heute gesetzt.
     </p>
 
     <div class="flex-row">
@@ -252,9 +250,7 @@
           <th>Verbrauch (L/100km)</th>
         </tr>
       </thead>
-      <tbody id="tankenTableBody">
-        <!-- gefüllt aus localStorage -->
-      </tbody>
+      <tbody id="tankenTableBody"></tbody>
     </table>
 
     <div id="tankenSummary" class="summary"></div>
@@ -287,9 +283,6 @@
   </div>
 
   <script>
-    // ==========================
-    // Konfiguration
-    // ==========================
     const PASSWORD = "Fatih";
     const VEHICLE_KEY = "fahrzeug_daten_v1";
     const WARTUNG_KEY = "fahrzeug_wartung_v1";
@@ -298,9 +291,6 @@
     const INSPEKTION_KEY = "fahrzeug_inspektion_v1";
     const OELINTERVALL_KEY = "fahrzeug_oelintervall_v1";
 
-    // ==========================
-    // Hilfsfunktionen Passwort
-    // ==========================
     function askPasswordThen(callback) {
       const eingabe = prompt("Bitte Passwort zum Löschen eingeben:");
       if (eingabe === null) return;
@@ -313,21 +303,13 @@
       callback();
     }
 
-    // ==========================
-    // Fahrzeugdaten
-    // ==========================
+    // ---------- Fahrzeug ----------
     function loadVehicleData() {
       const raw = localStorage.getItem(VEHICLE_KEY);
       let data;
-
       if (raw) {
-        try {
-          data = JSON.parse(raw);
-        } catch {
-          data = null;
-        }
+        try { data = JSON.parse(raw); } catch { data = null; }
       }
-
       if (!data) {
         data = {
           marke: "Mazda",
@@ -338,54 +320,51 @@
           kennzeichen: "",
           tuevBis: ""
         };
-      } else {
-        if (!("tuevBis" in data)) data.tuevBis = "";
+      } else if (!("tuevBis" in data)) {
+        data.tuevBis = "";
       }
 
-      document.getElementById("markeInput").value = data.marke || "";
-      document.getElementById("modellInput").value = data.modell || "";
-      document.getElementById("kontaktInput").value = data.kontakt || "";
-      document.getElementById("schluessel21Input").value = data.schluessel21 || "";
-      document.getElementById("schluessel22Input").value = data.schluessel22 || "";
-      document.getElementById("kennzeichenInput").value = data.kennzeichen || "";
-      document.getElementById("tuevBisInput").value = data.tuevBis || "";
+      markeInput.value = data.marke || "";
+      modellInput.value = data.modell || "";
+      kontaktInput.value = data.kontakt || "";
+      schluessel21Input.value = data.schluessel21 || "";
+      schluessel22Input.value = data.schluessel22 || "";
+      kennzeichenInput.value = data.kennzeichen || "";
+      tuevBisInput.value = data.tuevBis || "";
     }
 
     function saveVehicleData() {
       const data = {
-        marke: document.getElementById("markeInput").value.trim(),
-        modell: document.getElementById("modellInput").value.trim(),
-        kontakt: document.getElementById("kontaktInput").value.trim(),
-        schluessel21: document.getElementById("schluessel21Input").value.trim(),
-        schluessel22: document.getElementById("schluessel22Input").value.trim(),
-        kennzeichen: document.getElementById("kennzeichenInput").value.trim(),
-        tuevBis: document.getElementById("tuevBisInput").value
+        marke: markeInput.value.trim(),
+        modell: modellInput.value.trim(),
+        kontakt: kontaktInput.value.trim(),
+        schluessel21: schluessel21Input.value.trim(),
+        schluessel22: schluessel22Input.value.trim(),
+        kennzeichen: kennzeichenInput.value.trim(),
+        tuevBis: tuevBisInput.value
       };
       localStorage.setItem(VEHICLE_KEY, JSON.stringify(data));
-      const msg = document.getElementById("vehicleSavedMessage");
-      msg.textContent = "Fahrzeugdaten gespeichert.";
-      setTimeout(() => { msg.textContent = ""; }, 3000);
+      vehicleSavedMessage.textContent = "Fahrzeugdaten gespeichert.";
+      setTimeout(() => vehicleSavedMessage.textContent = "", 3000);
       renderDashboard();
     }
 
     function autoUpdateTuevFromInput() {
       const raw = localStorage.getItem(VEHICLE_KEY);
       let data = null;
-      if (raw) {
-        try { data = JSON.parse(raw); } catch { data = null; }
-      }
+      if (raw) { try { data = JSON.parse(raw); } catch { data = null; } }
       if (!data) {
         data = {
-          marke: document.getElementById("markeInput").value.trim() || "Mazda",
-          modell: document.getElementById("modellInput").value.trim() || "2 DY",
-          kontakt: document.getElementById("kontaktInput").value.trim() || "",
-          schluessel21: document.getElementById("schluessel21Input").value.trim() || "7118",
-          schluessel22: document.getElementById("schluessel22Input").value.trim() || "273",
-          kennzeichen: document.getElementById("kennzeichenInput").value.trim() || "",
-          tuevBis: document.getElementById("tuevBisInput").value
+          marke: markeInput.value.trim() || "Mazda",
+          modell: modellInput.value.trim() || "2 DY",
+          kontakt: kontaktInput.value.trim() || "",
+          schluessel21: schluessel21Input.value.trim() || "7118",
+          schluessel22: schluessel22Input.value.trim() || "273",
+          kennzeichen: kennzeichenInput.value.trim() || "",
+          tuevBis: tuevBisInput.value
         };
       } else {
-        data.tuevBis = document.getElementById("tuevBisInput").value;
+        data.tuevBis = tuevBisInput.value;
       }
       localStorage.setItem(VEHICLE_KEY, JSON.stringify(data));
       renderDashboard();
@@ -396,138 +375,111 @@
         localStorage.removeItem(VEHICLE_KEY);
         loadVehicleData();
         renderDashboard();
-        const msg = document.getElementById("vehicleSavedMessage");
-        msg.textContent = "Fahrzeugdaten gelöscht (Standard Mazda 2 DY wieder eingesetzt).";
-        setTimeout(() => { msg.textContent = ""; }, 4000);
+        vehicleSavedMessage.textContent = "Fahrzeugdaten gelöscht (Standard Mazda 2 DY wieder eingesetzt).";
+        setTimeout(() => vehicleSavedMessage.textContent = "", 4000);
       });
     }
 
-    // ==========================
-    // Ölwechsel-Intervall
-    // ==========================
+    // ---------- Ölintervall ----------
     function loadOelIntervall() {
       const raw = localStorage.getItem(OELINTERVALL_KEY);
       let val = 15000;
-      if (raw != null && raw !== "") {
+      if (raw) {
         const num = Number(raw);
-        if (!isNaN(num) && num > 0) {
-          val = num;
-        }
+        if (!isNaN(num) && num > 0) val = num;
       }
-      document.getElementById("oelIntervallInput").value = val;
+      oelIntervallInput.value = val;
     }
 
     function saveOelIntervall() {
-      const inputVal = document.getElementById("oelIntervallInput").value;
-      const msg = document.getElementById("oelIntervallMessage");
-      const num = Number(inputVal);
+      const num = Number(oelIntervallInput.value);
       if (isNaN(num) || num <= 0) {
-        msg.textContent = "Bitte eine gültige Kilometerzahl > 0 eingeben.";
-        setTimeout(() => { msg.textContent = ""; }, 3000);
+        oelIntervallMessage.textContent = "Bitte eine gültige Kilometerzahl > 0 eingeben.";
+        setTimeout(() => oelIntervallMessage.textContent = "", 3000);
         return;
       }
       localStorage.setItem(OELINTERVALL_KEY, String(num));
-      msg.textContent = "Intervall gespeichert.";
-      setTimeout(() => { msg.textContent = ""; }, 3000);
+      oelIntervallMessage.textContent = "Intervall gespeichert.";
+      setTimeout(() => oelIntervallMessage.textContent = "", 3000);
       renderDashboard();
     }
 
     function getOelIntervallValue() {
       const raw = localStorage.getItem(OELINTERVALL_KEY);
       let val = 15000;
-      if (raw != null && raw !== "") {
+      if (raw) {
         const num = Number(raw);
-        if (!isNaN(num) && num > 0) {
-          val = num;
-        }
+        if (!isNaN(num) && num > 0) val = num;
       }
       return val;
     }
 
-    // ==========================
-    // Wartung / Reparaturen
-    // ==========================
+    // ---------- Wartung ----------
     function getWartungList() {
       const raw = localStorage.getItem(WARTUNG_KEY);
       if (!raw) return [];
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return [];
-      }
+      try { return JSON.parse(raw); } catch { return []; }
     }
 
     function saveWartungList(list) {
       localStorage.setItem(WARTUNG_KEY, JSON.stringify(list));
     }
 
+    // Deine 11 Einträge mit Kosten – nur wenn noch nichts existiert
     function seedInitialWartung() {
       if (localStorage.getItem(WARTUNG_KEY)) return;
-
-      const dateObj = new Date(2025, 10, 25); // 25.11.2025
-      const dateMs = dateObj.getTime();
-      const datumText = dateObj.toLocaleDateString("de-DE");
+      const d = new Date(2025, 10, 25); // 25.11.2025
+      const ms = d.getTime();
+      const dt = d.toLocaleDateString("de-DE");
+      const km = 99722;
 
       const list = [
-        { datum: datumText, dateMs: dateMs, km: 99272, art: "TÜV", kosten: 170 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Zahnriemensatz", kosten: 400 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Reifen 2x vorne", kosten: 100 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Keilrippen 2x", kosten: 70 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Frostschutz", kosten: 5 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Luftfilter", kosten: 10 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Klimafilter", kosten: 20 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Ölwechsel", kosten: 50 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Kühlwasserthermostat", kosten: 50 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Standlicht", kosten: 10 },
-        { datum: datumText, dateMs: dateMs, km: 99722, art: "Abblendlicht", kosten: 15 }
+        { datum: dt, dateMs: ms, km: 99272, art: "TÜV", kosten: 170 },
+        { datum: dt, dateMs: ms, km, art: "Zahnriemensatz", kosten: 400 },
+        { datum: dt, dateMs: ms, km, art: "Reifen 2x vorne", kosten: 100 },
+        { datum: dt, dateMs: ms, km, art: "Keilrippen 2x", kosten: 70 },
+        { datum: dt, dateMs: ms, km, art: "Frostschutz", kosten: 5 },
+        { datum: dt, dateMs: ms, km, art: "Luftfilter", kosten: 10 },
+        { datum: dt, dateMs: ms, km, art: "Klimafilter", kosten: 20 },
+        { datum: dt, dateMs: ms, km, art: "Ölwechsel", kosten: 50 },
+        { datum: dt, dateMs: ms, km, art: "Kühlwasserthermostat", kosten: 50 },
+        { datum: dt, dateMs: ms, km, art: "Standlicht", kosten: 10 },
+        { datum: dt, dateMs: ms, km, art: "Abblendlicht", kosten: 15 }
       ];
-
       saveWartungList(list);
     }
 
     function renderWartungTable() {
-      const tbody = document.getElementById("wartungTableBody");
+      const tbody = wartungTableBody;
       tbody.innerHTML = "";
       const list = getWartungList();
 
-      list
-        .slice()
-        .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
-        .forEach(entry => {
-          const tr = document.createElement("tr");
-          const tdDatum = document.createElement("td");
-          const tdKm = document.createElement("td");
-          const tdArt = document.createElement("td");
-          const tdKosten = document.createElement("td");
+      list.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).forEach(e => {
+        const tr = document.createElement("tr");
+        const tdD = document.createElement("td");
+        const tdKm = document.createElement("td");
+        const tdA = document.createElement("td");
+        const tdK = document.createElement("td");
 
-          tdDatum.textContent = entry.datum || "";
-          tdKm.textContent = entry.km != null ? entry.km + " km" : "";
-          tdArt.textContent = entry.art || "";
-          tdKosten.textContent =
-            entry.kosten != null && !isNaN(entry.kosten)
-              ? entry.kosten.toFixed(2) + " €"
-              : "";
+        tdD.textContent = e.datum || "";
+        tdKm.textContent = e.km != null ? e.km + " km" : "";
+        tdA.textContent = e.art || "";
+        tdK.textContent = (e.kosten != null && !isNaN(e.kosten)) ? e.kosten.toFixed(2) + " €" : "";
 
-          tr.appendChild(tdDatum);
-          tr.appendChild(tdKraftstoff);
-          tr.appendChild(tdKm);
-          tr.appendChild(tdLiter);
-          tr.appendChild(tdPreis);
-          tr.appendChild(tdKosten);
-          tr.appendChild(tdVerbrauch);
-          tbody.appendChild(tr);
-        });
+        tr.appendChild(tdD);
+        tr.appendChild(tdKm);
+        tr.appendChild(tdA);
+        tr.appendChild(tdK);
+        tbody.appendChild(tr);
+      });
 
       renderWartungSummary();
     }
 
     function renderWartungSummary() {
       const list = getWartungList();
-      const summary = document.getElementById("wartungSummary");
-      if (!summary) return;
-
-      if (list.length === 0) {
-        summary.textContent = "Noch keine Wartungskosten erfasst.";
+      if (!list.length) {
+        wartungSummary.textContent = "Noch keine Wartungskosten erfasst.";
         return;
       }
 
@@ -550,101 +502,80 @@
         }
       });
 
-      if (total === 0) {
-        summary.textContent = "Noch keine Wartungskosten erfasst.";
+      if (!total) {
+        wartungSummary.textContent = "Noch keine Wartungskosten erfasst.";
         return;
       }
 
-      let parts = [];
-      parts.push("Gesamt Wartungskosten: " + total.toFixed(2) + " €");
+      let text = "Gesamt Wartungskosten: " + total.toFixed(2) + " €\n";
+      Object.keys(perMonth)
+        .sort((a,b)=>{
+          const [ma,ya]=a.split("/"); const [mb,yb]=b.split("/");
+          return new Date(+ya,+ma-1,1) - new Date(+yb,+mb-1,1);
+        })
+        .forEach(k => { text += k + ": " + perMonth[k].toFixed(2) + " €\n"; });
 
-      const keys = Object.keys(perMonth).sort((a, b) => {
-        const [ma, ya] = a.split("/");
-        const [mb, yb] = b.split("/");
-        const da = new Date(Number(ya) || 0, Number(ma) - 1 || 0, 1);
-        const db = new Date(Number(yb) || 0, Number(mb) - 1 || 0, 1);
-        return da - db;
-      });
-
-      keys.forEach(k => {
-        parts.push(k + ": " + perMonth[k].toFixed(2) + " €");
-      });
-
-      summary.textContent = parts.join("\n");
+      wartungSummary.textContent = text.trim();
     }
 
-    function maybeAskUpdateTuevFromWartung(artText) {
-      if (!artText) return;
-      const t = artText.toLowerCase();
+    function maybeAskUpdateTuevFromWartung(text) {
+      if (!text) return;
+      const t = text.toLowerCase();
       if (!(t.includes("tüv") || t.includes("tuev") || t.includes("tuv"))) return;
 
-      const willUpdate = confirm(
-        "In diesem Wartungseintrag steht 'TÜV'.\n" +
-        "Möchtest du das TÜV-Datum im Dashboard aktualisieren?"
-      );
-      if (!willUpdate) return;
+      const ok = confirm("In diesem Wartungseintrag steht 'TÜV'.\nTÜV-Datum oben aktualisieren?");
+      if (!ok) return;
 
-      const current = document.getElementById("tuevBisInput").value || "";
-      const input = prompt(
-        "Bitte neues TÜV-Datum eingeben (Format JJJJ-MM-TT):",
-        current
-      );
-      if (!input) return;
-
-      const regex = /^\d{4}-\d{2}-\d{2}$/;
-      if (!regex.test(input)) {
-        alert("Ungültiges Format. Bitte JJJJ-MM-TT verwenden (z. B. 2026-06-30).");
+      const current = tuevBisInput.value || "";
+      const neu = prompt("Neues TÜV-Datum (JJJJ-MM-TT):", current);
+      if (!neu) return;
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(neu)) {
+        alert("Ungültiges Format. Beispiel: 2026-06-30");
         return;
       }
-
-      document.getElementById("tuevBisInput").value = input;
+      tuevBisInput.value = neu;
       autoUpdateTuevFromInput();
     }
 
     function addWartungEntry() {
-      const kmValue = document.getElementById("wartungKmInput").value;
-      const artValue = document.getElementById("wartungArtInput").value.trim();
-      const kostenValue = document.getElementById("wartungKostenInput").value;
+      const km = wartungKmInput.value === "" ? null : Number(wartungKmInput.value);
+      const art = wartungArtInput.value.trim();
+      const kostenStr = wartungKostenInput.value;
 
-      const km = kmValue === "" ? null : Number(kmValue);
       if (km == null || isNaN(km)) {
         alert("Bitte einen gültigen Kilometerstand eingeben.");
         return;
       }
-      if (!artValue) {
+      if (!art) {
         alert("Bitte eine Beschreibung der Wartung/Reparatur eingeben.");
         return;
       }
 
       let kosten = null;
-      if (kostenValue !== "") {
-        kosten = Number(kostenValue);
+      if (kostenStr !== "") {
+        kosten = Number(kostenStr);
         if (isNaN(kosten) || kosten < 0) {
-          alert("Bitte gültige Kosten (>= 0) eingeben oder Feld leer lassen.");
+          alert("Bitte gültige Kosten eingeben oder Feld leer lassen.");
           return;
         }
       }
 
       const now = new Date();
-      const datumText = now.toLocaleDateString("de-DE");
-      const dateMs = now.getTime();
-
       const list = getWartungList();
       list.push({
-        datum: datumText,
-        dateMs: dateMs,
-        km: km,
-        art: artValue,
-        kosten: kosten
+        datum: now.toLocaleDateString("de-DE"),
+        dateMs: now.getTime(),
+        km, art, kosten
       });
       saveWartungList(list);
-      document.getElementById("wartungKmInput").value = "";
-      document.getElementById("wartungArtInput").value = "";
-      document.getElementById("wartungKostenInput").value = "";
+
+      wartungKmInput.value = "";
+      wartungArtInput.value = "";
+      wartungKostenInput.value = "";
+
       renderWartungTable();
       renderDashboard();
-
-      maybeAskUpdateTuevFromWartung(artValue);
+      maybeAskUpdateTuevFromWartung(art);
     }
 
     function deleteWartungData() {
@@ -658,10 +589,7 @@
     function deleteLastWartung() {
       askPasswordThen(() => {
         const list = getWartungList();
-        if (list.length === 0) {
-          alert("Keine Wartungseinträge vorhanden.");
-          return;
-        }
+        if (!list.length) { alert("Keine Wartungseinträge vorhanden."); return; }
         list.pop();
         saveWartungList(list);
         renderWartungTable();
@@ -669,144 +597,115 @@
       });
     }
 
-    // ==========================
-    // Tanken / Verbrauch
-    // ==========================
+    // ---------- Tanken ----------
     function getTankenList() {
       const raw = localStorage.getItem(TANKEN_KEY);
       if (!raw) return [];
-      try {
-        return JSON.parse(raw);
-      } catch {
-        return [];
-      }
+      try { return JSON.parse(raw); } catch { return []; }
     }
-
     function saveTankenList(list) {
       localStorage.setItem(TANKEN_KEY, JSON.stringify(list));
     }
 
     function loadTankDefaults() {
       const raw = localStorage.getItem(TANK_DEFAULT_KEY);
-      let defaults = { kraftstoff: "Benzin", preis: "" };
-
+      let def = { kraftstoff: "Benzin", preis: "" };
       if (raw) {
         try {
-          const parsed = JSON.parse(raw);
-          if (parsed && typeof parsed === "object") {
-            if (parsed.kraftstoff) defaults.kraftstoff = parsed.kraftstoff;
-            if (parsed.preis !== undefined) defaults.preis = parsed.preis;
+          const p = JSON.parse(raw);
+          if (p && typeof p === "object") {
+            if (p.kraftstoff) def.kraftstoff = p.kraftstoff;
+            if (p.preis !== undefined) def.preis = p.preis;
           }
         } catch {}
       }
-
-      const sel = document.getElementById("tankenKraftstoffInput");
-      sel.value = defaults.kraftstoff || "";
-
-      const preisInput = document.getElementById("tankenPreisInput");
-      if (defaults.preis !== "" && defaults.preis !== null && !isNaN(defaults.preis)) {
-        preisInput.value = defaults.preis;
+      tankenKraftstoffInput.value = def.kraftstoff || "Benzin";
+      if (def.preis !== "" && def.preis != null && !isNaN(def.preis)) {
+        tankenPreisInput.value = def.preis;
       }
     }
 
     function setTodayForTankDate() {
-      const inp = document.getElementById("tankenDatumInput");
-      if (!inp) return;
-      if (!inp.value) {
+      if (!tankenDatumInput.value) {
         const d = new Date();
         const yyyy = d.getFullYear();
         const mm = String(d.getMonth() + 1).padStart(2, "0");
         const dd = String(d.getDate()).padStart(2, "0");
-        inp.value = yyyy + "-" + mm + "-" + dd;
+        tankenDatumInput.value = `${yyyy}-${mm}-${dd}`;
       }
     }
 
     function renderTankenTable() {
-      const tbody = document.getElementById("tankenTableBody");
+      const tbody = tankenTableBody;
       tbody.innerHTML = "";
       const list = getTankenList();
 
-      list
-        .slice()
-        .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
-        .forEach(entry => {
-          const tr = document.createElement("tr");
-          const tdDatum = document.createElement("td");
-          const tdKraftstoff = document.createElement("td");
-          const tdKm = document.createElement("td");
-          const tdLiter = document.createElement("td");
-          const tdPreis = document.createElement("td");
-          const tdKosten = document.createElement("td");
-          const tdVerbrauch = document.createElement("td");
+      list.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).forEach(e => {
+        const tr = document.createElement("tr");
+        const tdD = document.createElement("td");
+        const tdKf = document.createElement("td");
+        const tdKm = document.createElement("td");
+        const tdL = document.createElement("td");
+        const tdP = document.createElement("td");
+        const tdK = document.createElement("td");
+        const tdV = document.createElement("td");
 
-          tdDatum.textContent = entry.datum || "";
-          tdKraftstoff.textContent = entry.kraftstoff || "";
-          tdKm.textContent = entry.km != null ? entry.km + " km" : "";
-          tdLiter.textContent = entry.liter != null ? entry.liter.toFixed(2) + " L" : "";
-          tdPreis.textContent = entry.preis != null ? entry.preis.toFixed(3) + " €/L" : "";
-          tdKosten.textContent = entry.kosten != null ? entry.kosten.toFixed(2) + " €" : "";
-          tdVerbrauch.textContent = entry.verbrauch != null ? entry.verbrauch.toFixed(2) + " L/100km" : "";
+        tdD.textContent = e.datum || "";
+        tdKf.textContent = e.kraftstoff || "";
+        tdKm.textContent = e.km != null ? e.km + " km" : "";
+        tdL.textContent = e.liter != null ? e.liter.toFixed(2) + " L" : "";
+        tdP.textContent = e.preis != null ? e.preis.toFixed(3) + " €/L" : "";
+        tdK.textContent = e.kosten != null ? e.kosten.toFixed(2) + " €" : "";
+        tdV.textContent = e.verbrauch != null ? e.verbrauch.toFixed(2) + " L/100km" : "";
 
-          tr.appendChild(tdDatum);
-          tr.appendChild(tdKraftstoff);
-          tr.appendChild(tdKm);
-          tr.appendChild(tdLiter);
-          tr.appendChild(tdPreis);
-          tr.appendChild(tdKosten);
-          tbody.appendChild(tr);
-        });
+        tr.appendChild(tdD);
+        tr.appendChild(tdKf);
+        tr.appendChild(tdKm);
+        tr.appendChild(tdL);
+        tr.appendChild(tdP);
+        tr.appendChild(tdK);
+        tr.appendChild(tdV);   // WICHTIG: Verbrauch-Spalte anhängen
+        tbody.appendChild(tr);
+      });
 
       renderTankenSummary();
     }
 
     function renderTankenSummary() {
       const list = getTankenList();
-      const summary = document.getElementById("tankenSummary");
-      if (list.length === 0) {
-        summary.textContent = "Noch keine Tankdaten erfasst.";
+      if (!list.length) {
+        tankenSummary.textContent = "Noch keine Tankdaten erfasst.";
         renderDashboard();
         return;
       }
 
-      let sumVerbrauch = 0;
-      let zaehler = 0;
-      let sumKosten = 0;
-
+      let sumV = 0, countV = 0, sumK = 0;
       list.forEach(e => {
         if (e.verbrauch != null && !isNaN(e.verbrauch) && e.km > 0) {
-          sumVerbrauch += e.verbrauch;
-          zaehler++;
+          sumV += e.verbrauch; countV++;
         }
-        if (e.kosten != null && !isNaN(e.kosten)) {
-          sumKosten += e.kosten;
-        }
+        if (e.kosten != null && !isNaN(e.kosten)) sumK += e.kosten;
       });
 
-      const avgVerbrauch = zaehler > 0 ? (sumVerbrauch / zaehler) : null;
-      const last = list.slice().sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0)).pop();
+      const avg = countV ? sumV / countV : null;
+      const last = list.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).pop();
 
-      let text = "Anzahl Tankvorgänge: " + list.length + ". Gesamt-Kosten: " + sumKosten.toFixed(2) + " €.";
-      if (avgVerbrauch != null) {
-        text += " Durchschnittsverbrauch: " + avgVerbrauch.toFixed(2) + " L/100km.";
-      }
+      let text = `Anzahl Tankvorgänge: ${list.length}. Gesamt-Kosten: ${sumK.toFixed(2)} €.`;
+      if (avg != null) text += ` Durchschnittsverbrauch: ${avg.toFixed(2)} L/100km.`;
       if (last && last.verbrauch != null && !isNaN(last.verbrauch)) {
-        text += " Letzter Verbrauch: " + last.verbrauch.toFixed(2) + " L/100km.";
+        text += ` Letzter Verbrauch: ${last.verbrauch.toFixed(2)} L/100km.`;
       }
-
-      summary.textContent = text;
+      tankenSummary.textContent = text;
       renderDashboard();
     }
 
     function addTankenEntry() {
-      const datumValue = document.getElementById("tankenDatumInput").value;
-      const kmValue = document.getElementById("tankenKmInput").value;
-      const kraftstoffValue = document.getElementById("tankenKraftstoffInput").value;
-      const literValue = document.getElementById("tankenLiterInput").value;
-      const preisValue = document.getElementById("tankenPreisInput").value;
+      setTodayForTankDate(); // Datum sicher auf heute setzen, falls leer
 
-      const km = kmValue === "" ? null : Number(kmValue);
-      const liter = literValue === "" ? null : Number(literValue);
-      const preis = preisValue === "" ? null : Number(preisValue);
+      const km = tankenKmInput.value === "" ? null : Number(tankenKmInput.value);
+      const kraftstoff = tankenKraftstoffInput.value;
+      const liter = tankenLiterInput.value === "" ? null : Number(tankenLiterInput.value);
+      const preis = tankenPreisInput.value === "" ? null : Number(tankenPreisInput.value);
 
       if (km == null || isNaN(km) || km <= 0) {
         alert("Bitte gültige gefahrene Kilometer eingeben (> 0).");
@@ -820,50 +719,35 @@
         alert("Bitte gültigen Preis pro Liter eingeben (> 0).");
         return;
       }
-      if (!kraftstoffValue) {
+      if (!kraftstoff) {
         alert("Bitte eine Kraftstoffart auswählen.");
         return;
       }
 
       let dateObj;
-      if (datumValue) {
-        const parts = datumValue.split("-");
-        if (parts.length === 3) {
-          const year = Number(parts[0]);
-          const month = Number(parts[1]) - 1;
-          const day = Number(parts[2]);
-          dateObj = new Date(year, month, day);
-        } else {
-          dateObj = new Date();
-        }
+      if (tankenDatumInput.value) {
+        const [y,m,d] = tankenDatumInput.value.split("-");
+        dateObj = new Date(Number(y), Number(m)-1, Number(d));
       } else {
         dateObj = new Date();
       }
 
-      const datumText = dateObj.toLocaleDateString("de-DE");
-      const dateMs = dateObj.getTime();
-
       const kosten = liter * preis;
       const verbrauch = (liter / km) * 100;
-
       const list = getTankenList();
       list.push({
-        datum: datumText,
-        dateMs: dateMs,
-        km: km,
-        kraftstoff: kraftstoffValue,
-        liter: liter,
-        preis: preis,
-        kosten: kosten,
-        verbrauch: verbrauch
+        datum: dateObj.toLocaleDateString("de-DE"),
+        dateMs: dateObj.getTime(),
+        km, kraftstoff, liter, preis, kosten, verbrauch
       });
       saveTankenList(list);
 
-      document.getElementById("tankenKmInput").value = "";
-      document.getElementById("tankenLiterInput").value = "";
+      tankenKmInput.value = "";
+      tankenLiterInput.value = "";
+      // Datum für den nächsten Eintrag wieder auf heute setzen
       setTodayForTankDate();
 
-      const defaults = { kraftstoff: kraftstoffValue, preis: preis };
+      const defaults = { kraftstoff, preis };
       localStorage.setItem(TANK_DEFAULT_KEY, JSON.stringify(defaults));
 
       renderTankenTable();
@@ -880,10 +764,7 @@
     function deleteLastTanken() {
       askPasswordThen(() => {
         const list = getTankenList();
-        if (list.length === 0) {
-          alert("Keine Tank-Einträge vorhanden.");
-          return;
-        }
+        if (!list.length) { alert("Keine Tank-Einträge vorhanden."); return; }
         list.pop();
         saveTankenList(list);
         renderTankenTable();
@@ -891,15 +772,9 @@
       });
     }
 
-    // ==========================
-    // Kopier-Funktionen
-    // ==========================
+    // ---------- Kopieren ----------
     function copyTextToClipboard(text) {
-      if (!text) {
-        alert("Nichts zum Kopieren vorhanden.");
-        return;
-      }
-
+      if (!text) { alert("Nichts zum Kopieren vorhanden."); return; }
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(text)
           .then(() => alert("Text in Zwischenablage kopiert."))
@@ -908,219 +783,147 @@
         fallbackCopy(text);
       }
     }
-
     function fallbackCopy(text) {
-      const temp = document.createElement("textarea");
-      temp.value = text;
-      document.body.appendChild(temp);
-      temp.select();
-      try { document.execCommand("copy"); } catch (e) {}
-      document.body.removeChild(temp);
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand("copy"); } catch(e) {}
+      document.body.removeChild(ta);
       alert("Text in Zwischenablage kopiert.");
     }
 
     function copyInspektion() {
-      const text = document.getElementById("inspektionNotizen").value.trim();
-      if (!text) {
-        alert("Keine Inspektions-Notizen vorhanden.");
-        return;
-      }
-      copyTextToClipboard(text);
+      const t = inspektionNotizen.value.trim();
+      if (!t) { alert("Keine Inspektions-Notizen vorhanden."); return; }
+      copyTextToClipboard(t);
     }
 
     function copyTanken() {
       const list = getTankenList();
-      if (list.length === 0) {
-        alert("Keine Tank-Einträge vorhanden.");
-        return;
-      }
-
-      let lines = [];
+      if (!list.length) { alert("Keine Tank-Einträge vorhanden."); return; }
+      const lines = [];
       lines.push("Datum;Kraftstoff;km;Liter;Preis/Liter;Gesamtkosten;Verbrauch L/100km");
-
-      list
-        .slice()
-        .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
-        .forEach(e => {
-          const kmText = e.km != null ? e.km + " km" : "";
-          const literText = e.liter != null ? e.liter.toFixed(2) + " L" : "";
-          const preisText = e.preis != null ? e.preis.toFixed(3) + " €/L" : "";
-          const kostenText = e.kosten != null ? e.kosten.toFixed(2) + " €" : "";
-          const verbText = e.verbrauch != null ? e.verbrauch.toFixed(2) + " L/100km" : "";
-
-          const line = [
-            e.datum || "",
-            e.kraftstoff || "",
-            kmText,
-            literText,
-            preisText,
-            kostenText,
-            verbText
-          ].join(";");
-          lines.push(line);
-        });
-
-      const summary = document.getElementById("tankenSummary").textContent || "";
-      if (summary) {
-        lines.push("");
-        lines.push("Zusammenfassung:");
-        lines.push(summary);
+      list.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).forEach(e=>{
+        lines.push([
+          e.datum || "",
+          e.kraftstoff || "",
+          e.km != null ? e.km + " km" : "",
+          e.liter != null ? e.liter.toFixed(2) + " L" : "",
+          e.preis != null ? e.preis.toFixed(3) + " €/L" : "",
+          e.kosten != null ? e.kosten.toFixed(2) + " €" : "",
+          e.verbrauch != null ? e.verbrauch.toFixed(2) + " L/100km" : ""
+        ].join(";"));
+      });
+      const sum = tankenSummary.textContent || "";
+      if (sum) {
+        lines.push("", "Zusammenfassung:", sum);
       }
-
       copyTextToClipboard(lines.join("\n"));
     }
 
     function copyWartung() {
       const list = getWartungList();
-      if (list.length === 0) {
-        alert("Keine Wartungsdaten vorhanden.");
-        return;
-      }
-
-      let lines = [];
+      if (!list.length) { alert("Keine Wartungsdaten vorhanden."); return; }
+      const lines = [];
       lines.push("Datum;Kilometer;Text;Kosten (€)");
-
-      list
-        .slice()
-        .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
-        .forEach(e => {
-          const kmText = e.km != null ? e.km + " km" : "";
-          const kostenText =
-            e.kosten != null && !isNaN(e.kosten)
-              ? e.kosten.toFixed(2) + " €"
-              : "";
-          const line = [
-            e.datum || "",
-            kmText,
-            e.art || "",
-            kostenText
-          ].join(";");
-          lines.push(line);
-        });
-
+      list.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).forEach(e=>{
+        lines.push([
+          e.datum || "",
+          e.km != null ? e.km + " km" : "",
+          e.art || "",
+          (e.kosten != null && !isNaN(e.kosten)) ? e.kosten.toFixed(2) + " €" : ""
+        ].join(";"));
+      });
       copyTextToClipboard(lines.join("\n"));
     }
 
-    // ==========================
-    // Inspektions-Notizen
-    // ==========================
+    // ---------- Inspektionsnotizen ----------
     function loadInspektion() {
       const raw = localStorage.getItem(INSPEKTION_KEY);
-      if (raw) {
-        document.getElementById("inspektionNotizen").value = raw;
-      } else {
-        document.getElementById("inspektionNotizen").value = "";
-      }
+      inspektionNotizen.value = raw || "";
     }
-
     function saveInspektion() {
-      const text = document.getElementById("inspektionNotizen").value;
-      localStorage.setItem(INSPEKTION_KEY, text);
-      const msg = document.getElementById("inspektionSavedMessage");
-      msg.textContent = "Inspektions-Notizen gespeichert.";
-      setTimeout(() => { msg.textContent = ""; }, 3000);
+      localStorage.setItem(INSPEKTION_KEY, inspektionNotizen.value);
+      inspektionSavedMessage.textContent = "Inspektions-Notizen gespeichert.";
+      setTimeout(()=>inspektionSavedMessage.textContent="",3000);
     }
-
     function deleteInspektion() {
-      askPasswordThen(() => {
+      askPasswordThen(()=>{
         localStorage.removeItem(INSPEKTION_KEY);
         loadInspektion();
       });
     }
 
-    // ==========================
-    // Dashboard
-    // ==========================
+    // ---------- Dashboard ----------
     function renderDashboard() {
-      const tuevSpan = document.getElementById("dashTuevInfo");
-      const oilSpan = document.getElementById("dashOilInfo");
-      const nextOilSpan = document.getElementById("dashNextOilInfo");
-      const fuelSpan = document.getElementById("dashFuelInfo");
-
-      const rawVehicle = localStorage.getItem(VEHICLE_KEY);
+      // TÜV
       let tuevText = "keine Daten";
-      if (rawVehicle) {
+      const rawV = localStorage.getItem(VEHICLE_KEY);
+      if (rawV) {
         try {
-          const v = JSON.parse(rawVehicle);
+          const v = JSON.parse(rawV);
           if (v.tuevBis) {
-            const parts = v.tuevBis.split("-");
-            if (parts.length === 3) {
-              const year = Number(parts[0]);
-              const month = Number(parts[1]) - 1;
-              const day = Number(parts[2]);
-              const tuevDate = new Date(year, month, day);
-              const heute = new Date();
-              tuevDate.setHours(0,0,0,0);
-              heute.setHours(0,0,0,0);
-              const diffMs = tuevDate.getTime() - heute.getTime();
-              const diffTage = Math.round(diffMs / (1000 * 60 * 60 * 24));
-              const datumText = tuevDate.toLocaleDateString("de-DE");
-
-              if (diffTage > 0) {
-                tuevText = "bis " + datumText + " (noch ca. " + diffTage + " Tage)";
-              } else if (diffTage === 0) {
-                tuevText = "bis " + datumText + " (läuft HEUTE ab!)";
-              } else {
-                tuevText = "abgelaufen am " + datumText + " (seit " + Math.abs(diffTage) + " Tagen)";
-              }
-            }
+            const [y,m,d] = v.tuevBis.split("-");
+            const tDate = new Date(Number(y),Number(m)-1,Number(d));
+            const heute = new Date();
+            tDate.setHours(0,0,0,0);
+            heute.setHours(0,0,0,0);
+            const diffTage = Math.round((tDate-heute)/(1000*60*60*24));
+            const dt = tDate.toLocaleDateString("de-DE");
+            if (diffTage>0) tuevText = `bis ${dt} (noch ca. ${diffTage} Tage)`;
+            else if (diffTage===0) tuevText = `bis ${dt} (läuft HEUTE ab!)`;
+            else tuevText = `abgelaufen am ${dt} (seit ${Math.abs(diffTage)} Tagen)`;
           }
         } catch {}
       }
-      tuevSpan.textContent = tuevText;
+      dashTuevInfo.textContent = tuevText;
 
-      const wartungen = getWartungList();
-      const oilEntries = wartungen.filter(e => {
+      // Ölwechsel
+      const wart = getWartungList();
+      const oil = wart.filter(e=>{
         if (!e.art) return false;
         const t = e.art.toLowerCase();
         return t.includes("öl") || t.includes("oel");
       });
-      if (oilEntries.length === 0) {
-        oilSpan.textContent = "keine Ölwechsel-Einträge gefunden.";
-        nextOilSpan.textContent = "kein letzter Ölwechsel vorhanden.";
+      if (!oil.length) {
+        dashOilInfo.textContent = "keine Ölwechsel-Einträge gefunden.";
+        dashNextOilInfo.textContent = "kein letzter Ölwechsel vorhanden.";
       } else {
-        const lastOil = oilEntries
-          .slice()
-          .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
-          .pop();
-        let txt = "am " + lastOil.datum;
-        if (lastOil.km != null) {
-          txt += " bei ca. " + lastOil.km + " km";
-        }
-        oilSpan.textContent = txt;
+        const last = oil.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).pop();
+        let txt = "am " + last.datum;
+        if (last.km != null) txt += " bei ca. " + last.km + " km";
+        dashOilInfo.textContent = txt;
 
         const intervall = getOelIntervallValue();
-        if (lastOil.km != null && !isNaN(lastOil.km)) {
-          const nextKm = lastOil.km + intervall;
-          nextOilSpan.textContent =
-            "bei ca. " + nextKm + " km (Intervall: " + intervall +
-            " km, letzter Ölwechsel bei " + lastOil.km + " km)";
+        if (last.km != null && !isNaN(last.km)) {
+          const nextKm = last.km + intervall;
+          dashNextOilInfo.textContent =
+            `bei ca. ${nextKm} km (Intervall: ${intervall} km, letzter Ölwechsel bei ${last.km} km)`;
         } else {
-          nextOilSpan.textContent =
-            "Intervall: " + intervall + " km – kein Kilometerstand beim letzten Ölwechsel gespeichert.";
+          dashNextOilInfo.textContent =
+            `Intervall: ${intervall} km – kein Kilometerstand beim letzten Ölwechsel gespeichert.`;
         }
       }
 
-      const tanken = getTankenList();
-      if (tanken.length === 0) {
-        fuelSpan.textContent = "keine Tankdaten vorhanden.";
+      // Verbrauch
+      const tank = getTankenList();
+      if (!tank.length) {
+        dashFuelInfo.textContent = "keine Tankdaten vorhanden.";
       } else {
-        const last = tanken.slice().sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0)).pop();
+        const last = tank.slice().sort((a,b)=>(a.dateMs||0)-(b.dateMs||0)).pop();
         if (last.verbrauch != null && !isNaN(last.verbrauch)) {
-          fuelSpan.textContent =
-            last.verbrauch.toFixed(2) + " L/100km (" +
-            last.datum + ", " + (last.kraftstoff || "Kraftstoff unbekannt") + ")";
+          dashFuelInfo.textContent =
+            `${last.verbrauch.toFixed(2)} L/100km (${last.datum}, ${last.kraftstoff || "Kraftstoff unbekannt"})`;
         } else {
-          fuelSpan.textContent = "kein Verbrauch berechnet.";
+          dashFuelInfo.textContent = "kein Verbrauch berechnet.";
         }
       }
     }
 
-    // ==========================
-    // Alle Daten löschen
-    // ==========================
+    // ---------- Alle löschen ----------
     function deleteAllData() {
-      askPasswordThen(() => {
+      askPasswordThen(()=>{
         localStorage.removeItem(VEHICLE_KEY);
         localStorage.removeItem(WARTUNG_KEY);
         localStorage.removeItem(TANKEN_KEY);
@@ -1128,53 +931,50 @@
         localStorage.removeItem(OELINTERVALL_KEY);
         localStorage.removeItem(TANK_DEFAULT_KEY);
 
-        loadVehicleData();
-        loadOelIntervall();
-        seedInitialWartung();
-        renderWartungTable();
-        loadTankDefaults();
-        renderTankenTable();
-        loadInspektion();
-        setTodayForTankDate();
-        renderDashboard();
-
-        const msg = document.getElementById("deleteMessage");
-        msg.textContent = "Alle Daten wurden gelöscht.";
-        setTimeout(() => { msg.textContent = ""; }, 4000);
+        init(); // alles neu laden + Seed
+        deleteMessage.textContent = "Alle Daten wurden gelöscht.";
+        setTimeout(()=>deleteMessage.textContent="",4000);
       });
     }
 
-    document.getElementById("saveVehicleButton").addEventListener("click", saveVehicleData);
-    document.getElementById("deleteVehicleButton").addEventListener("click", deleteVehicleData);
-    document.getElementById("tuevBisInput").addEventListener("change", autoUpdateTuevFromInput);
+    // ---------- Init ----------
+    function init() {
+      // Events
+      saveVehicleButton.onclick = saveVehicleData;
+      deleteVehicleButton.onclick = deleteVehicleData;
+      tuevBisInput.onchange = autoUpdateTuevFromInput;
 
-    document.getElementById("saveOelIntervallButton").addEventListener("click", saveOelIntervall);
+      saveOelIntervallButton.onclick = saveOelIntervall;
 
-    document.getElementById("addWartungButton").addEventListener("click", addWartungEntry);
-    document.getElementById("deleteWartungButton").addEventListener("click", deleteWartungData);
-    document.getElementById("deleteLastWartungButton").addEventListener("click", deleteLastWartung);
-    document.getElementById("copyWartungButton").addEventListener("click", copyWartung);
+      addWartungButton.onclick = addWartungEntry;
+      deleteWartungButton.onclick = deleteWartungData;
+      deleteLastWartungButton.onclick = deleteLastWartung;
+      copyWartungButton.onclick = copyWartung;
 
-    document.getElementById("addTankenButton").addEventListener("click", addTankenEntry);
-    document.getElementById("deleteTankenButton").addEventListener("click", deleteTankenData);
-    document.getElementById("deleteLastTankenButton").addEventListener("click", deleteLastTanken);
-    document.getElementById("copyTankenButton").addEventListener("click", copyTanken);
+      addTankenButton.onclick = addTankenEntry;
+      deleteTankenButton.onclick = deleteTankenData;
+      deleteLastTankenButton.onclick = deleteLastTanken;
+      copyTankenButton.onclick = copyTanken;
 
-    document.getElementById("saveInspektionButton").addEventListener("click", saveInspektion);
-    document.getElementById("deleteInspektionButton").addEventListener("click", deleteInspektion);
-    document.getElementById("copyInspektionButton").addEventListener("click", copyInspektion);
+      saveInspektionButton.onclick = saveInspektion;
+      deleteInspektionButton.onclick = deleteInspektion;
+      copyInspektionButton.onclick = copyInspektion;
 
-    document.getElementById("deleteAllButton").addEventListener("click", deleteAllData);
+      deleteAllButton.onclick = deleteAllData;
 
-    loadVehicleData();
-    loadOelIntervall();
-    seedInitialWartung();
-    renderWartungTable();
-    loadTankDefaults();
-    renderTankenTable();
-    loadInspektion();
-    setTodayForTankDate();
-    renderDashboard();
+      // Laden
+      loadVehicleData();
+      loadOelIntervall();
+      seedInitialWartung();
+      renderWartungTable();
+      loadTankDefaults();
+      setTodayForTankDate();
+      renderTankenTable();
+      loadInspektion();
+      renderDashboard();
+    }
+
+    window.addEventListener("load", init);
   </script>
 </body>
 </html>
