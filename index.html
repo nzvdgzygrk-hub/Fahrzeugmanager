@@ -72,6 +72,7 @@
     .summary {
       margin-top: 10px;
       font-size: 0.9rem;
+      white-space: pre-line;
     }
     .highlight {
       font-weight: bold;
@@ -108,20 +109,20 @@
     <div class="flex-row">
       <div class="flex-col">
         <label for="markeInput">Marke</label>
-        <input type="text" id="markeInput" placeholder="z. B. Mazda">
+        <input type="text" id="markeInput" value="Mazda">
 
         <label for="modellInput">Modell</label>
-        <input type="text" id="modellInput" placeholder="z. B. 2 DY">
+        <input type="text" id="modellInput" value="2 DY">
 
         <label for="kontaktInput">Kontakt / Handy</label>
         <input type="text" id="kontaktInput" placeholder="z. B. 0176 ...">
       </div>
       <div class="flex-col">
         <label for="schluessel21Input">Schlüsselnummer zu 2.1</label>
-        <input type="text" id="schluessel21Input" placeholder="z. B. 7118">
+        <input type="text" id="schluessel21Input" value="7118">
 
         <label for="schluessel22Input">Schlüsselnummer zu 2.2</label>
-        <input type="text" id="schluessel22Input" placeholder="z. B. 273">
+        <input type="text" id="schluessel22Input" value="273">
 
         <label for="kennzeichenInput">Kennzeichen / Notiz</label>
         <input type="text" id="kennzeichenInput" placeholder="z. B. V-AB 123">
@@ -159,9 +160,12 @@
         <label for="wartungArtInput">Reparatur / Wartung</label>
         <input type="text" id="wartungArtInput" placeholder="z. B. Ölwechsel, TÜV, Zahnriemenwechsel">
       </div>
+    </div>
+
+    <div class="flex-row">
       <div class="flex-col">
-        <label for="wartungPreisInput">Kosten (€)</label>
-        <input type="number" id="wartungPreisInput" min="0" step="0.01" placeholder="z. B. 89.9">
+        <label for="wartungKostenInput">Kosten (€)</label>
+        <input type="number" id="wartungKostenInput" min="0" step="0.01" placeholder="optional">
       </div>
     </div>
 
@@ -192,8 +196,7 @@
         <!-- gefüllt aus localStorage -->
       </tbody>
     </table>
-
-    <div id="wartungSummaryMonths" class="summary"></div>
+    <div id="wartungSummary" class="summary"></div>
   </div>
 
   <!-- Tanken / Verbrauch -->
@@ -202,7 +205,7 @@
     <p class="small-text">
       Trage Tankvorgänge ein. Verbrauch und Kosten werden automatisch berechnet.<br>
       Verbrauch: Liter / gefahrene Kilometer × 100.<br>
-      Kosten = Liter × Preis/Liter.
+      Standard: Benzin. Letzter Kraftstoff & Preis bleiben gespeichert. Datum wird automatisch auf heute gesetzt.
     </p>
 
     <div class="flex-row">
@@ -229,9 +232,6 @@
       <div class="flex-col">
         <label for="tankenPreisInput">Preis pro Liter (€)</label>
         <input type="number" id="tankenPreisInput" min="0" step="0.001" placeholder="z. B. 1.849">
-        <p class="small-text">
-          Standardmäßig ist hier nichts vorgegeben – Preis immer selbst eintragen.
-        </p>
       </div>
     </div>
 
@@ -258,7 +258,6 @@
     </table>
 
     <div id="tankenSummary" class="summary"></div>
-    <div id="tankenSummaryMonths" class="summary"></div>
   </div>
 
   <!-- Inspektions-Notizen -->
@@ -295,6 +294,7 @@
     const VEHICLE_KEY = "fahrzeug_daten_v1";
     const WARTUNG_KEY = "fahrzeug_wartung_v1";
     const TANKEN_KEY = "fahrzeug_tanken_v1";
+    const TANK_DEFAULT_KEY = "fahrzeug_tanken_defaults_v1";
     const INSPEKTION_KEY = "fahrzeug_inspektion_v1";
     const OELINTERVALL_KEY = "fahrzeug_oelintervall_v1";
 
@@ -303,7 +303,7 @@
     // ==========================
     function askPasswordThen(callback) {
       const eingabe = prompt("Bitte Passwort zum Löschen eingeben:");
-      if (eingabe === null) return; // abgebrochen
+      if (eingabe === null) return;
       if (eingabe !== PASSWORD) {
         alert("Falsches Passwort.");
         return;
@@ -328,7 +328,6 @@
         }
       }
 
-      // Falls nichts gespeichert: Mazda 2DY mit Schlüsselnummern vorbelegen
       if (!data) {
         data = {
           marke: "Mazda",
@@ -408,7 +407,7 @@
     // ==========================
     function loadOelIntervall() {
       const raw = localStorage.getItem(OELINTERVALL_KEY);
-      let val = 15000; // Standard
+      let val = 15000;
       if (raw != null && raw !== "") {
         const num = Number(raw);
         if (!isNaN(num) && num > 0) {
@@ -446,32 +445,6 @@
     }
 
     // ==========================
-    // Datum -> Monat/Jahr-Helfer
-    // ==========================
-    function getYearMonthFromEntry(entry) {
-      let d = null;
-      if (entry.dateMs) {
-        d = new Date(entry.dateMs);
-      } else if (entry.datum) {
-        // Versuch, deutsches Datum zu parsen (TT.MM.JJJJ)
-        const parts = entry.datum.split(".");
-        if (parts.length === 3) {
-          const day = Number(parts[0]);
-          const month = Number(parts[1]) - 1;
-          const year = Number(parts[2]);
-          d = new Date(year, month, day);
-        }
-      }
-      if (!d || isNaN(d.getTime())) return null;
-      return { year: d.getFullYear(), month: d.getMonth() };
-    }
-
-    function formatMonthYear(year, monthIndex) {
-      const d = new Date(year, monthIndex, 1);
-      return d.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
-    }
-
-    // ==========================
     // Wartung / Reparaturen
     // ==========================
     function getWartungList() {
@@ -488,6 +461,30 @@
       localStorage.setItem(WARTUNG_KEY, JSON.stringify(list));
     }
 
+    function seedInitialWartung() {
+      if (localStorage.getItem(WARTUNG_KEY)) return;
+
+      const dateObj = new Date(2025, 10, 25); // 25.11.2025
+      const dateMs = dateObj.getTime();
+      const datumText = dateObj.toLocaleDateString("de-DE");
+
+      const list = [
+        { datum: datumText, dateMs: dateMs, km: 99272, art: "TÜV", kosten: 170 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Zahnriemensatz", kosten: 400 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Reifen 2x vorne", kosten: 100 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Keilrippen 2x", kosten: 70 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Frostschutz", kosten: 5 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Luftfilter", kosten: 10 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Klimafilter", kosten: 20 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Ölwechsel", kosten: 50 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Kühlwasserthermostat", kosten: 50 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Standlicht", kosten: 10 },
+        { datum: datumText, dateMs: dateMs, km: 99722, art: "Abblendlicht", kosten: 15 }
+      ];
+
+      saveWartungList(list);
+    }
+
     function renderWartungTable() {
       const tbody = document.getElementById("wartungTableBody");
       tbody.innerHTML = "";
@@ -501,25 +498,76 @@
           const tdDatum = document.createElement("td");
           const tdKm = document.createElement("td");
           const tdArt = document.createElement("td");
-          const tdPreis = document.createElement("td");
+          const tdKosten = document.createElement("td");
 
           tdDatum.textContent = entry.datum || "";
-          tdKm.textContent = entry.km != null ? entry.km : "";
+          tdKm.textContent = entry.km != null ? entry.km + " km" : "";
           tdArt.textContent = entry.art || "";
-          if (entry.preis != null && !isNaN(entry.preis)) {
-            tdPreis.textContent = entry.preis.toFixed(2);
-          } else {
-            tdPreis.textContent = "";
-          }
+          tdKosten.textContent =
+            entry.kosten != null && !isNaN(entry.kosten)
+              ? entry.kosten.toFixed(2) + " €"
+              : "";
 
           tr.appendChild(tdDatum);
           tr.appendChild(tdKm);
           tr.appendChild(tdArt);
-          tr.appendChild(tdPreis);
+          tr.appendChild(tdKosten);
           tbody.appendChild(tr);
         });
 
-      renderWartungMonthlySummary();
+      renderWartungSummary();
+    }
+
+    function renderWartungSummary() {
+      const list = getWartungList();
+      const summary = document.getElementById("wartungSummary");
+      if (!summary) return;
+
+      if (list.length === 0) {
+        summary.textContent = "Noch keine Wartungskosten erfasst.";
+        return;
+      }
+
+      let total = 0;
+      const perMonth = {};
+
+      list.forEach(e => {
+        if (e.kosten != null && !isNaN(e.kosten) && e.kosten > 0) {
+          total += e.kosten;
+          let key = "ohne Datum";
+          if (e.dateMs) {
+            const d = new Date(e.dateMs);
+            if (!isNaN(d.getTime())) {
+              const m = String(d.getMonth() + 1).padStart(2, "0");
+              const y = d.getFullYear();
+              key = m + "/" + y;
+            }
+          }
+          perMonth[key] = (perMonth[key] || 0) + e.kosten;
+        }
+      });
+
+      if (total === 0) {
+        summary.textContent = "Noch keine Wartungskosten erfasst.";
+        return;
+      }
+
+      let parts = [];
+      parts.push("Gesamt Wartungskosten: " + total.toFixed(2) + " €");
+
+      const keys = Object.keys(perMonth).sort((a, b) => {
+        const [ma, ya] = a.split("/");
+        const [mb, yb] = b.split("/");
+        const da = new Date(Number(ya) || 0, Number(ma) - 1 || 0, 1);
+        const db = new Date(Number(yb) || 0, Number(mb) - 1 || 0, 1);
+        return da - db;
+      });
+
+      keys.forEach(k => {
+        parts.push(k + ": " + perMonth[k].toFixed(2) + " €");
+      });
+
+      summary.textContent = parts.join("\n");
     }
 
     function maybeAskUpdateTuevFromWartung(artText) {
@@ -553,7 +601,7 @@
     function addWartungEntry() {
       const kmValue = document.getElementById("wartungKmInput").value;
       const artValue = document.getElementById("wartungArtInput").value.trim();
-      const preisValue = document.getElementById("wartungPreisInput").value;
+      const kostenValue = document.getElementById("wartungKostenInput").value;
 
       const km = kmValue === "" ? null : Number(kmValue);
       if (km == null || isNaN(km)) {
@@ -565,11 +613,11 @@
         return;
       }
 
-      let preis = null;
-      if (preisValue !== "") {
-        preis = Number(preisValue);
-        if (isNaN(preis) || preis < 0) {
-          alert("Bitte einen gültigen Preis eingeben (>= 0) oder Feld leer lassen.");
+      let kosten = null;
+      if (kostenValue !== "") {
+        kosten = Number(kostenValue);
+        if (isNaN(kosten) || kosten < 0) {
+          alert("Bitte gültige Kosten (>= 0) eingeben oder Feld leer lassen.");
           return;
         }
       }
@@ -584,16 +632,15 @@
         dateMs: dateMs,
         km: km,
         art: artValue,
-        preis: preis
+        kosten: kosten
       });
       saveWartungList(list);
       document.getElementById("wartungKmInput").value = "";
       document.getElementById("wartungArtInput").value = "";
-      document.getElementById("wartungPreisInput").value = "";
+      document.getElementById("wartungKostenInput").value = "";
       renderWartungTable();
       renderDashboard();
 
-      // Falls im Text "TÜV" steht, optional TÜV-Datum im Dashboard aktualisieren
       maybeAskUpdateTuevFromWartung(artValue);
     }
 
@@ -619,51 +666,6 @@
       });
     }
 
-    function renderWartungMonthlySummary() {
-      const container = document.getElementById("wartungSummaryMonths");
-      const list = getWartungList();
-      if (!container) return;
-
-      if (list.length === 0) {
-        container.textContent = "Noch keine Wartungskosten erfasst.";
-        return;
-      }
-
-      const map = {}; // key: "year-month" -> sum
-      list.forEach(e => {
-        if (e.preis == null || isNaN(e.preis) || e.preis <= 0) return;
-        const ym = getYearMonthFromEntry(e);
-        if (!ym) return;
-        const key = ym.year + "-" + ym.month;
-        if (!map[key]) {
-          map[key] = { year: ym.year, month: ym.month, sum: 0 };
-        }
-        map[key].sum += e.preis;
-      });
-
-      const keys = Object.keys(map);
-      if (keys.length === 0) {
-        container.textContent = "Keine Wartungskosten mit Betrag erfasst.";
-        return;
-      }
-
-      // sortiert nach Jahr/Monat
-      keys.sort((a, b) => {
-        const aa = map[a], bb = map[b];
-        if (aa.year !== bb.year) return aa.year - bb.year;
-        return aa.month - bb.month;
-      });
-
-      let html = "<strong>Wartungskosten pro Monat:</strong><br>";
-      keys.forEach(k => {
-        const item = map[k];
-        const label = formatMonthYear(item.year, item.month);
-        html += `${label}: ${item.sum.toFixed(2)} €<br>`;
-      });
-
-      container.innerHTML = html;
-    }
-
     // ==========================
     // Tanken / Verbrauch
     // ==========================
@@ -679,6 +681,41 @@
 
     function saveTankenList(list) {
       localStorage.setItem(TANKEN_KEY, JSON.stringify(list));
+    }
+
+    function loadTankDefaults() {
+      const raw = localStorage.getItem(TANK_DEFAULT_KEY);
+      let defaults = { kraftstoff: "Benzin", preis: "" };
+
+      if (raw) {
+        try {
+          const parsed = JSON.parse(raw);
+          if (parsed && typeof parsed === "object") {
+            if (parsed.kraftstoff) defaults.kraftstoff = parsed.kraftstoff;
+            if (parsed.preis !== undefined) defaults.preis = parsed.preis;
+          }
+        } catch {}
+      }
+
+      const sel = document.getElementById("tankenKraftstoffInput");
+      sel.value = defaults.kraftstoff || "";
+
+      const preisInput = document.getElementById("tankenPreisInput");
+      if (defaults.preis !== "" && defaults.preis !== null && !isNaN(defaults.preis)) {
+        preisInput.value = defaults.preis;
+      }
+    }
+
+    function setTodayForTankDate() {
+      const inp = document.getElementById("tankenDatumInput");
+      if (!inp) return;
+      if (!inp.value) {
+        const d = new Date();
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        inp.value = yyyy + "-" + mm + "-" + dd;
+      }
     }
 
     function renderTankenTable() {
@@ -701,11 +738,11 @@
 
           tdDatum.textContent = entry.datum || "";
           tdKraftstoff.textContent = entry.kraftstoff || "";
-          tdKm.textContent = entry.km != null ? entry.km : "";
-          tdLiter.textContent = entry.liter != null ? entry.liter.toFixed(2) : "";
-          tdPreis.textContent = entry.preis != null ? entry.preis.toFixed(3) : "";
-          tdKosten.textContent = entry.kosten != null ? entry.kosten.toFixed(2) : "";
-          tdVerbrauch.textContent = entry.verbrauch != null ? entry.verbrauch.toFixed(2) : "";
+          tdKm.textContent = entry.km != null ? entry.km + " km" : "";
+          tdLiter.textContent = entry.liter != null ? entry.liter.toFixed(2) + " L" : "";
+          tdPreis.textContent = entry.preis != null ? entry.preis.toFixed(3) + " €/L" : "";
+          tdKosten.textContent = entry.kosten != null ? entry.kosten.toFixed(2) + " €" : "";
+          tdVerbrauch.textContent = entry.verbrauch != null ? entry.verbrauch.toFixed(2) + " L/100km" : "";
 
           tr.appendChild(tdDatum);
           tr.appendChild(tdKraftstoff);
@@ -713,12 +750,10 @@
           tr.appendChild(tdLiter);
           tr.appendChild(tdPreis);
           tr.appendChild(tdKosten);
-          tr.appendChild(tdVerbrauch);
           tbody.appendChild(tr);
         });
 
       renderTankenSummary();
-      renderTankenMonthlySummary();
     }
 
     function renderTankenSummary() {
@@ -745,63 +780,18 @@
       });
 
       const avgVerbrauch = zaehler > 0 ? (sumVerbrauch / zaehler) : null;
-
       const last = list.slice().sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0)).pop();
 
-      let text = `Anzahl Tankvorgänge: ${list.length}. Gesamt-Kosten: ${sumKosten.toFixed(2)} €.`;
+      let text = "Anzahl Tankvorgänge: " + list.length + ". Gesamt-Kosten: " + sumKosten.toFixed(2) + " €.";
       if (avgVerbrauch != null) {
-        text += ` Durchschnittsverbrauch: ${avgVerbrauch.toFixed(2)} L/100km.`;
+        text += " Durchschnittsverbrauch: " + avgVerbrauch.toFixed(2) + " L/100km.";
       }
       if (last && last.verbrauch != null && !isNaN(last.verbrauch)) {
-        text += ` Letzter Verbrauch: ${last.verbrauch.toFixed(2)} L/100km.`;
+        text += " Letzter Verbrauch: " + last.verbrauch.toFixed(2) + " L/100km.";
       }
 
       summary.textContent = text;
       renderDashboard();
-    }
-
-    function renderTankenMonthlySummary() {
-      const container = document.getElementById("tankenSummaryMonths");
-      const list = getTankenList();
-      if (!container) return;
-
-      if (list.length === 0) {
-        container.textContent = "";
-        return;
-      }
-
-      const map = {};
-      list.forEach(e => {
-        if (e.kosten == null || isNaN(e.kosten) || e.kosten <= 0) return;
-        const ym = getYearMonthFromEntry(e);
-        if (!ym) return;
-        const key = ym.year + "-" + ym.month;
-        if (!map[key]) {
-          map[key] = { year: ym.year, month: ym.month, sum: 0 };
-        }
-        map[key].sum += e.kosten;
-      });
-
-      const keys = Object.keys(map);
-      if (keys.length === 0) {
-        container.textContent = "Keine Tankkosten erfasst.";
-        return;
-      }
-
-      keys.sort((a, b) => {
-        const aa = map[a], bb = map[b];
-        if (aa.year !== bb.year) return aa.year - bb.year;
-        return aa.month - bb.month;
-      });
-
-      let html = "<strong>Tankkosten pro Monat:</strong><br>";
-      keys.forEach(k => {
-        const item = map[k];
-        const label = formatMonthYear(item.year, item.month);
-        html += `${label}: ${item.sum.toFixed(2)} €<br>`;
-      });
-
-      container.innerHTML = html;
     }
 
     function addTankenEntry() {
@@ -868,7 +858,10 @@
 
       document.getElementById("tankenKmInput").value = "";
       document.getElementById("tankenLiterInput").value = "";
-      document.getElementById("tankenPreisInput").value = "";
+      setTodayForTankDate();
+
+      const defaults = { kraftstoff: kraftstoffValue, preis: preis };
+      localStorage.setItem(TANK_DEFAULT_KEY, JSON.stringify(defaults));
 
       renderTankenTable();
     }
@@ -946,14 +939,20 @@
         .slice()
         .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
         .forEach(e => {
+          const kmText = e.km != null ? e.km + " km" : "";
+          const literText = e.liter != null ? e.liter.toFixed(2) + " L" : "";
+          const preisText = e.preis != null ? e.preis.toFixed(3) + " €/L" : "";
+          const kostenText = e.kosten != null ? e.kosten.toFixed(2) + " €" : "";
+          const verbText = e.verbrauch != null ? e.verbrauch.toFixed(2) + " L/100km" : "";
+
           const line = [
             e.datum || "",
             e.kraftstoff || "",
-            e.km != null ? e.km : "",
-            e.liter != null ? e.liter.toFixed(2) : "",
-            e.preis != null ? e.preis.toFixed(3) : "",
-            e.kosten != null ? e.kosten.toFixed(2) : "",
-            e.verbrauch != null ? e.verbrauch.toFixed(2) : ""
+            kmText,
+            literText,
+            preisText,
+            kostenText,
+            verbText
           ].join(";");
           lines.push(line);
         });
@@ -982,11 +981,16 @@
         .slice()
         .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
         .forEach(e => {
+          const kmText = e.km != null ? e.km + " km" : "";
+          const kostenText =
+            e.kosten != null && !isNaN(e.kosten)
+              ? e.kosten.toFixed(2) + " €"
+              : "";
           const line = [
             e.datum || "",
-            e.km != null ? e.km : "",
+            kmText,
             e.art || "",
-            e.preis != null && !isNaN(e.preis) ? e.preis.toFixed(2) : ""
+            kostenText
           ].join(";");
           lines.push(line);
         });
@@ -1030,7 +1034,6 @@
       const nextOilSpan = document.getElementById("dashNextOilInfo");
       const fuelSpan = document.getElementById("dashFuelInfo");
 
-      // TÜV
       const rawVehicle = localStorage.getItem(VEHICLE_KEY);
       let tuevText = "keine Daten";
       if (rawVehicle) {
@@ -1051,11 +1054,11 @@
               const datumText = tuevDate.toLocaleDateString("de-DE");
 
               if (diffTage > 0) {
-                tuevText = `bis ${datumText} (noch ca. ${diffTage} Tage)`;
+                tuevText = "bis " + datumText + " (noch ca. " + diffTage + " Tage)";
               } else if (diffTage === 0) {
-                tuevText = `bis ${datumText} (läuft HEUTE ab!)`;
+                tuevText = "bis " + datumText + " (läuft HEUTE ab!)";
               } else {
-                tuevText = `abgelaufen am ${datumText} (seit ${Math.abs(diffTage)} Tagen)`;
+                tuevText = "abgelaufen am " + datumText + " (seit " + Math.abs(diffTage) + " Tagen)";
               }
             }
           }
@@ -1063,7 +1066,6 @@
       }
       tuevSpan.textContent = tuevText;
 
-      // Letzter Ölwechsel + nächster Ölwechsel
       const wartungen = getWartungList();
       const oilEntries = wartungen.filter(e => {
         if (!e.art) return false;
@@ -1078,9 +1080,9 @@
           .slice()
           .sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0))
           .pop();
-        let txt = `am ${lastOil.datum}`;
+        let txt = "am " + lastOil.datum;
         if (lastOil.km != null) {
-          txt += ` bei ca. ${lastOil.km} km`;
+          txt += " bei ca. " + lastOil.km + " km";
         }
         oilSpan.textContent = txt;
 
@@ -1088,14 +1090,14 @@
         if (lastOil.km != null && !isNaN(lastOil.km)) {
           const nextKm = lastOil.km + intervall;
           nextOilSpan.textContent =
-            `bei ca. ${nextKm} km (Intervall: ${intervall} km, letzter Ölwechsel bei ${lastOil.km} km)`;
+            "bei ca. " + nextKm + " km (Intervall: " + intervall +
+            " km, letzter Ölwechsel bei " + lastOil.km + " km)";
         } else {
           nextOilSpan.textContent =
-            `Intervall: ${intervall} km – kein Kilometerstand beim letzten Ölwechsel gespeichert.`;
+            "Intervall: " + intervall + " km – kein Kilometerstand beim letzten Ölwechsel gespeichert.";
         }
       }
 
-      // Letzter Verbrauch
       const tanken = getTankenList();
       if (tanken.length === 0) {
         fuelSpan.textContent = "keine Tankdaten vorhanden.";
@@ -1103,7 +1105,8 @@
         const last = tanken.slice().sort((a, b) => (a.dateMs || 0) - (b.dateMs || 0)).pop();
         if (last.verbrauch != null && !isNaN(last.verbrauch)) {
           fuelSpan.textContent =
-            `${last.verbrauch.toFixed(2)} L/100km (${last.datum}, ${last.kraftstoff || "Kraftstoff unbekannt"})`;
+            last.verbrauch.toFixed(2) + " L/100km (" +
+            last.datum + ", " + (last.kraftstoff || "Kraftstoff unbekannt") + ")";
         } else {
           fuelSpan.textContent = "kein Verbrauch berechnet.";
         }
@@ -1120,12 +1123,16 @@
         localStorage.removeItem(TANKEN_KEY);
         localStorage.removeItem(INSPEKTION_KEY);
         localStorage.removeItem(OELINTERVALL_KEY);
+        localStorage.removeItem(TANK_DEFAULT_KEY);
 
         loadVehicleData();
         loadOelIntervall();
+        seedInitialWartung();
         renderWartungTable();
+        loadTankDefaults();
         renderTankenTable();
         loadInspektion();
+        setTodayForTankDate();
         renderDashboard();
 
         const msg = document.getElementById("deleteMessage");
@@ -1134,9 +1141,6 @@
       });
     }
 
-    // ==========================
-    // Event-Handler / init
-    // ==========================
     document.getElementById("saveVehicleButton").addEventListener("click", saveVehicleData);
     document.getElementById("deleteVehicleButton").addEventListener("click", deleteVehicleData);
     document.getElementById("tuevBisInput").addEventListener("change", autoUpdateTuevFromInput);
@@ -1159,12 +1163,14 @@
 
     document.getElementById("deleteAllButton").addEventListener("click", deleteAllData);
 
-    // Beim Laden der Seite alles aus localStorage einlesen
     loadVehicleData();
     loadOelIntervall();
+    seedInitialWartung();
     renderWartungTable();
+    loadTankDefaults();
     renderTankenTable();
     loadInspektion();
+    setTodayForTankDate();
     renderDashboard();
   </script>
 </body>
